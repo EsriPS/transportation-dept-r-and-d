@@ -8,7 +8,7 @@ The samples are only published to stimulate thinking, show approaches in order t
 
 There is no warranty or support offered for any of the works illustrated in this repo.
 
-Licensing
+**Licensing**
 Copyright 2022 Esri
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
