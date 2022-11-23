@@ -1,6 +1,6 @@
 # PS Transportation Department Research and Development 
 
-This GITHUB site contains R&D work done by the Esri PS Transportation Department. 
+This repo contains R&D work done by the Esri PS Transportation Department. 
 
 The content illustrates simple examples of approaches we have used to understand development next steps. 
 
