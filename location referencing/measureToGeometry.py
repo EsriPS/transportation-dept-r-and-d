@@ -52,8 +52,6 @@ logName = 'measureToGeometry.log'
 
 def showResults(response_str):
 
-    result = None
-
     try:
         logging.info(f"showResults started.")
 
@@ -90,8 +88,6 @@ def showResults(response_str):
         elapsed_time = end_time - start_time
         logging.info("showResults completed, Elapsed time (seconds): %02d" % elapsed_time)
 
-        return result
-
 # -------------------------------------------------------------------------------
 # convertMeasureToGeometry
 # ------------------------------------------------------------------------------
@@ -100,8 +96,6 @@ def convertMeasureToGeometry(locations, outSR):
     logging.info("convertMeasureToGeometry started")
 
     start_time = time.time()
-
-    fs = None
 
     try:
 
@@ -126,13 +120,11 @@ def convertMeasureToGeometry(locations, outSR):
 
     except Exception as e:
         logging.error(f"...convertMeasureToGeometry failed: {e}")
-        fs = None
 
     finally:
         end_time = time.time()
         elapsed_time = end_time - start_time
         logging.info("convertMeasureToGeometry completed, Elapsed time (seconds): %02d" % elapsed_time)
-        return fs
     
 # -------------------------------------------------------------------------------
 # main
@@ -163,17 +155,6 @@ def main():
 
         logging.info("measureToGeometry started.")
 
-        # pointLocations = {
-        #     "routeId": "I391 NB",
-        #     "measure": 3.290
-        # }
-
-        # lineLocations = {
-        #     "routeId": "I391 NB",
-        #     "fromMeasure": 3.290,
-        #     "toMeasure": 3.3
-        # }
-
         pointLocations = {
             "routeId": "PK907A",
             "measure": 10.3873
@@ -191,7 +172,7 @@ def main():
 
         outSR = "102100"
 
-        geometry = convertMeasureToGeometry(locations, outSR)
+        convertMeasureToGeometry(locations, outSR)
 
     except Exception as e:
         logging.error(f"...measureToGeometry failed: {e}")
