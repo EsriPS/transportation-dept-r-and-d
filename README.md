@@ -1,5 +1,4 @@
-# PS-Transportation Dept R and D
-PS Transportation Department Research and Development 
+# PS Transportation Department Research and Development 
 
 This GITHUB site contains R&D work done by the Esri PS Transportation Department. 
 
