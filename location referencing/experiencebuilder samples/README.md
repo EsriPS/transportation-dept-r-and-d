@@ -1,7 +1,7 @@
 | Sample  | Description    | Exb Version
 | :---:   | :---: | :---: |
-| measuretogeometry.py | simple experiencebuilder widget that calls location referencing API measuretogeometry   |
-| geometrytomeasure.py | simple experiencebuilder widget that calls location referencing API geometrytomeasure   |
+| measuretogeometry.py | simple experiencebuilder widget that calls location referencing API measuretogeometry   | 1.9 |
+| geometrytomeasure.py | simple experiencebuilder widget that calls location referencing API geometrytomeasure   | 1.9 |
 
 
 | Sample  | Description    | Created using version | 
