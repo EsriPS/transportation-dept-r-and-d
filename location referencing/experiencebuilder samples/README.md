@@ -1,5 +1,5 @@
-| Sample  | Description    | Created using version |
-| :---:   | :---: |
+| Sample  | Description    | Created using version | 
+| :---:   | :---: | | :---: |
 | convertmeasuretogeometry | simple experiencebuilder widget that calls location referencing API measuretogeometry | 1.9|
 | convertgeometrytomeasure | simple experiencebuilder widget that calls location referencing API geometrytomeasure | 1.9 |
 | relocateevent | simple experiencebuilder widget that calls location referencing API relocateevent |1.9 |
