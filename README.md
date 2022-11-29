@@ -1,4 +1,4 @@
-# PS Transportation Department Research and Development 
+# Transportation Department Research and Development 
 
 This repo contains R&D work done by the Esri PS Transportation Department. 
 
