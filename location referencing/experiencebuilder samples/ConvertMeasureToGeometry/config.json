@@ -1,0 +1,4 @@
+{
+    "networkurl": "https://roadsandhighwayssample.esri.com/server/rest/services/RoadsHighways/NewYork/MapServer/2",
+    "m2gURL": "https://roadsandhighwayssample.esri.com/server/rest/services/RoadsHighways/NewYork/MapServer/exts/LRServer/networkLayers/3/measureToGeometry"
+}
