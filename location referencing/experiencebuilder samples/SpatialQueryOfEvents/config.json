@@ -1,0 +1,11 @@
+{
+    "mapservice": "https://roadsandhighwayssample.esri.com/server/rest/services/RoadsHighways/NewYork/MapServer",
+    "visiblelayers": "0,1",
+    "querylayerindex": "1",
+    "eventid" : "",
+    "routeid" : "",
+    "frommeasure" : "",
+    "tomeasure" : "",
+    "functionalclasstype" : "",
+    "to_date" : ""
+}
