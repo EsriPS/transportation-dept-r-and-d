@@ -5,6 +5,7 @@
 | relocateevent | simple experiencebuilder widget that calls location referencing API geometrytomeasure   | 1.9 |
 | spatialqueryofroutes | simple experiencebuilder widget that spatially queries routes   | 1.9 |
 | displayroutedetailsonhover | simple experiencebuilder widget that displays route details when hovering over the network   | 1.9 |
+| spatialqueryofevents | simple experiencebuilder widget that displays spatial queries for event details   | 1.9 |
 
 # Deployment / usage
 1. Copy the widget to the your-drive:\your-folder\your-dev-edition-experience-builder-deployment\client\your-extensions\widgets folder
