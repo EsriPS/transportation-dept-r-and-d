@@ -132,7 +132,7 @@ export default function Widget (props:AllWidgetProps<IMConfig>) {
       }
     ];
 
-    let fivePixels = (jmv.view.width / jmv.view.width) * 5;
+    let fivePixels = (jmv.view.extent.width / jmv.view.width) * 5;
 
     let content = {
         'locations': JSON.stringify(locations),
