@@ -10,7 +10,7 @@
 1. Copy the widget to the your-drive:\your-folder\your-dev-edition-experience-builder-deployment\client\your-extensions\widgets folder
 2. Add the widget to your experience
 3. Update the widgets settings
-4. Example settings (based on roadsandhighways samples / sample server...
+4. Example settings... (based on roadsandhighways samples / sample server)
 
    Network url: https://roadsandhighwayssample.esri.com/server/rest/services/RoadsHighways/NewYork/MapServer/2 
    
