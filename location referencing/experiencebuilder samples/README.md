@@ -6,6 +6,8 @@
 | spatialqueryofroutes | simple experiencebuilder widget that spatially queries routes   | 1.9 |
 | displayroutedetailsonhover | simple experiencebuilder widget that displays route details when hovering over the network   | 1.9 |
 | spatialqueryofevents | simple experiencebuilder widget that displays spatial queries for event details   | 1.9 |
+| attributequeryofevents | simple experiencebuilder widget that displays attribute queries for event details   | 1.9 |
+| attributequeryofroutes | simple experiencebuilder widget that displays attribute queries for route details   | 1.9 |
 
 # Deployment / usage
 1. Copy the widget to the your-drive:\your-folder\your-dev-edition-experience-builder-deployment\client\your-extensions\widgets folder
