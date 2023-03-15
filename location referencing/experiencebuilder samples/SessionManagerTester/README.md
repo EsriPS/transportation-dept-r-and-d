@@ -1,0 +1,1 @@
+Simple test harness used to assess users sign in status, props and utilizing the APP_CONFIG_PROCESSOR extension point
