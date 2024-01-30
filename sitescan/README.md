@@ -16,3 +16,4 @@ Notes:
 
 1. At the time of this posting, these samples require a Sitescan API License. Please contact your account manager for more info.
 2. Use the Get Site Scan API token, get its output for use in the other sample scripts.
+3. Many thanks to Chad L for his contributions.
