@@ -1,4 +1,4 @@
-These are sample py scripts that illustrate various service calls wothin the site scan API.
+These are sample py scripts that illustrate various service calls within the site scan API.
 
 | Sample  | Description    |
 | :---:   | :---: |
