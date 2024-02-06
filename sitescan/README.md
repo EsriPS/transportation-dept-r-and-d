@@ -1,4 +1,4 @@
-These are sample py scripts that illustrate various service calls within the site scan API.
+These are sample py scripts that illustrate various service calls within the site scan API. They are written usng the api here: https://sitescan-api.arcgis.com/api/v2/apidocs.html
 
 | Sample  | Description    |
 | :---:   | :---: |
