@@ -14,6 +14,6 @@ These are sample py scripts that illustrate various service calls within the sit
 
 Notes: 
 
-1. At the time of this posting, these samples require a Sitescan API License. Please contact your account manager for more info.
+1. At the time of this posting, these samples require a Sitescan API License -- please contact your account manager for more info.
 2. Use the Get Site Scan API token, get its output for use in the other sample scripts.
 3. Many thanks to Chad for his help/contributions.
