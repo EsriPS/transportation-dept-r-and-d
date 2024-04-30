@@ -1,0 +1,21 @@
+{
+  "name": "GetSkydioFiles",
+  "label": "Get Skydio Files",
+  "type": "widget",
+  "style": "styles/main.css",
+  "version": "1.13.0",
+  "exbVersion": "1.13.0",
+  "author": "Esri R&D Center Beijing",
+  "description": "This is the widget used in developer documentation",
+  "dependency": "jimu-arcgis",
+  "copyright": "",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 400,
+    "height": 400
+  }
+}
