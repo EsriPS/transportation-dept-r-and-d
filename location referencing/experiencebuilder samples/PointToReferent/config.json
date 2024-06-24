@@ -1,0 +1,15 @@
+{
+    "g2murl": "https://esri-rhpro-lrs.esri.com/server/rest/services/TDOT/Edit_LRS_Network/MapServer/exts/LRServer/networkLayers/111/GeometryToMeasure",
+    "g2rurl": "https://esri-rhpro-lrs.esri.com/server/rest/services/TDOT/Edit_LRS_Network/MapServer/exts/LRServer/networkLayers/111/geometryToReferent",
+    "g2rLayerId": "113",
+    "featureIdFieldName": "MILEPOST_MI",
+    "padFeatureId": false,
+    "defaultOffset": "nearestUpstream",
+    "OffsetUnitRounding": "3",
+    "tolerance": 50,
+    "outSR": "4326",
+    "outOffsetUnit": "esriMiles",
+    "userGuidance": "Awaiting map selection",
+    "posReferentSeperator": "+",
+    "negReferentSeperator": "-"
+}

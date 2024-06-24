@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="16"
+   height="16"
+   viewBox="0 0 4.2333333 4.2333332"
+   version="1.1"
+   id="svg5"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2">
+    <rect
+       x="1.005842"
+       y="1.508763"
+       width="58.171196"
+       height="58.338837"
+       id="rect703" />
+    <rect
+       x="10.05842"
+       y="10.561341"
+       width="39.730759"
+       height="39.22784"
+       id="rect328" />
+  </defs>
+  <g
+     id="layer1">
+    <text
+       xml:space="preserve"
+       transform="matrix(0.1021329,0,0,0.27435724,0.18415624,-0.03469262)"
+       id="text701"
+       style="white-space:pre;shape-inside:url(#rect703);display:inline;fill:#ffffff"><tspan
+         x="1.0058594"
+         y="12.455776"
+         id="tspan986">M p F</tspan></text>
+  </g>
+</svg>
