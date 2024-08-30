@@ -1,0 +1,265 @@
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Routes in AOI</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+  <script>
+    require([
+      "esri/WebMap",
+      "esri/widgets/Sketch",
+      "esri/Map",
+      "esri/Graphic",
+      "esri/layers/GraphicsLayer",
+      "esri/views/MapView",
+      "esri/geometry/geometryEngine",
+      "esri/layers/FeatureLayer",
+      "esri/Color"
+    ], (WebMap, Sketch, Map, Graphic, GraphicsLayer, MapView, geometryEngine, FeatureLayer, color) => {
+
+      // created a graphics layer to hold the highlighted graphics
+      const graphicsLayer = new GraphicsLayer({title:'highlights'});
+
+      let layers = [];
+      let originalSymbol = null;
+      let sketch = null;
+      const highlightColor = new color([255, 255, 0, 1]);       // segment highlight color
+      const lrsServiceTitle = 'LRSService - Routes';            // your service title  
+      const webmapId = 'ac397464e6e94621abc4445ae107df27';      // your webmap id
+
+      // configure your webmap
+      // should contain base + LRS Service layer
+      const webmap = new WebMap({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: webmapId
+          }
+        });
+
+      // Add the graphics layer to the web map at the topmost position
+      webmap.add(graphicsLayer);
+
+      // create a MapView
+      const view = new MapView({
+        container: "viewDiv",
+        map: webmap,
+        popupEnabled: false // Disable popups
+      });
+
+      // wait for the view to load
+      view.when(() => {
+
+        const lrsLayer = getLRSLayerFromMap(webmap)
+        console.log("lrsLayer: " + lrsLayer.title);
+
+        sketch = new Sketch({
+          layer: graphicsLayer,
+          snappingOptions: { // autocasts to SnappingOptions()
+            enabled: true, // global snapping is turned on
+            // assigns a collection of FeatureSnappingLayerSource() and enables feature snapping on this layer
+            featureSources: [{ layer: lrsLayer, enabled: true }]
+          },
+          view: view,
+          // graphic will be selected as soon as it is created
+          creationMode: "update",
+          availableCreateTools: ["polygon"]
+        });
+
+        // fires when the sketch is created
+        sketch.on("create", async function(event) {
+          // check if the create event's state has changed to complete indicating
+          // the graphic create operation is completed.
+          if (event.state === "complete") {
+            originalSymbol = lrsLayer.renderer.symbol//.color.toJSON()
+            // use the graphic.geometry to query features that intersect it
+            let clippedFeatures = await getClippedFeatures(view.map, lrsLayer, event.graphic.geometry, graphicsLayer);
+
+            // this is to unset the selected graphic
+            sketch.complete();
+
+            // create a new polygon sketch
+            sketch.create("polygon");
+          }
+        });
+
+        // fires when the sketch is deleted
+        sketch.on("delete", function(event) {
+          // Get the deleted graphics
+          var deletedGraphics = event.graphics;
+
+          // Iterate through the deleted graphics
+          deletedGraphics.forEach(function(deletedGraphic) {
+            // Check if the deleted graphic is a polygon
+            if (deletedGraphic.geometry.type === "polygon") {
+              // Get the extent of the deleted polygon
+              var deletedExtent = deletedGraphic.geometry.extent;
+
+              // Get the items array of the graphics layer
+              var graphicsItems = graphicsLayer.graphics.items;
+
+              // Iterate through the graphics in reverse order
+              for (var i = graphicsItems.length - 1; i >= 0; i--) {
+                var graphic = graphicsItems[i];
+
+                // Check if the graphic is a polyline
+                if (graphic.geometry.type === "polyline") {
+                  // Check if the polyline is inside the deleted polygon
+                  if (deletedExtent.intersects(graphic.geometry.extent)) {
+                    // Remove the polyline from the graphics layer
+                    graphicsLayer.remove(graphic);
+                  }
+                }
+              }
+            }
+          });
+          const totalSelected = countGraphicsByColor(graphicsLayer, highlightColor);
+          console.log("total selected segments: " + totalSelected);
+        });
+
+        // fires when the view is clicked
+        view.on("click", (event) => {
+          // Search for all features only on included layers at the clicked location
+          view.hitTest(event).then((response) => {
+            // if graphics are returned from vector tile layer, do something with results
+            if (response.results.length){
+              response.results.forEach((result, i) => {
+                // console.log("result.layer.title: " + result.layer.title);
+                const clickedGraphic = result.graphic;
+                if (result.layer.title === 'highlights') {
+                  console.log("found highlightsGraphicsLayer");
+
+                  if (result.graphic.geometry.type === 'polyline') {
+                    console.log("polyline clicked");
+                    // Toggle the highlight state
+                    clickedGraphic.highlighted = !clickedGraphic.highlighted;
+
+                    // Set the color of the clicked graphic based on the highlight state
+                    // note: the geometry cannot be hidden as the hittest will fail to return it
+                    if (clickedGraphic.highlighted) {
+                      clickedGraphic.symbol = originalSymbol
+                    } else {
+                      clickedGraphic.symbol = {
+                        type: "simple-line",
+                        color: highlightColor, // Yellow color
+                        width: 3
+                      }
+                    }
+                    sketch.complete();
+                    const totalSelected = countGraphicsByColor(graphicsLayer, highlightColor);
+                    console.log("total selected segments: " + totalSelected);
+                  } else if (result.graphic.geometry.type === 'polygon') {
+                    console.log("skipping selection polygon");
+                  }
+              }});
+            }
+          })
+        });
+
+        // make sure the graphics layer is always on top
+        view.map.reorder(graphicsLayer, view.map.layers.length - 1);
+
+        // add sketch to the view
+        view.ui.add(sketch, "top-right");
+      });
+
+      /**
+       * Get LRS Service layer from the map
+       * @param {Map} map - The map to get the LRS Service layerfrom
+       * @returns LRS Service Layer
+       */
+       function getLRSLayerFromMap(map) {
+        // Get all the layers in the map
+        const layers = map.layers.toArray();
+
+        // Filter the layers to only include MapServer layers
+        const mapServerLayers = layers.filter(layer => layer.title === lrsServiceTitle);
+
+        // Return the array of MapServer layers
+        return mapServerLayers[0];
+      }
+
+      /**
+       * Count the number of graphics with a specific color in a graphics layer
+       * @param {GraphicsLayer} graphicsLayer - The graphics layer to count the graphics from
+       * @param {Color} color - The color to count the graphics by
+       * @returns {number} The number of graphics with the specified color
+       */
+      function countGraphicsByColor(graphicsLayer, color) {
+          let count = 0;
+          for (let i = 0; i < graphicsLayer.graphics.items.length; i++) {
+              if (graphicsLayer.graphics.items[i].symbol.color === color) {
+                  count++;
+              }
+          }
+          return count;
+      }
+
+      /**
+       * Get the features intersected by the polygon and clip them to the inside of the polygon
+       * @param {Map} map - The map to get the features from
+       * @param {FeatureLayer} layer - The layer to get the features from
+       * @param {Polygon} polygonGeometry - The polygon to clip the features to
+       * @param {GraphicsLayer} graphicsLayer - The graphics layer to add the clipped features to
+       * @returns {GraphicsLayer} The graphics layer containing the clipped features
+       */
+      async function getClippedFeatures(map, layer, polygonGeometry, graphicsLayer) {
+        // Create a query object to get the features intersected by the polygon
+        const query = layer.createQuery();
+        query.geometry = polygonGeometry;
+
+        // Execute the query to get the features
+        const { features } = await layer.queryFeatures(query);
+
+        // Iterate through each feature and clip it to the inside of the polygon
+        features.forEach(feature => {
+          const clippedGeometry = geometryEngine.intersect(feature.geometry, polygonGeometry);
+          if (clippedGeometry) {
+            // Create a new graphic with the clipped geometry
+            const clippedGraphic = new Graphic({
+              geometry: clippedGeometry,
+              symbol: {
+                type: "simple-line",
+                color: highlightColor,
+                width: 3
+              }
+            });
+
+            // Add the clipped graphic to the graphics layer
+            graphicsLayer.add(clippedGraphic);
+
+            const totalSelected = countGraphicsByColor(graphicsLayer, highlightColor);
+            console.log("total selected segments: " + totalSelected);
+          }
+        });
+
+        // Add the graphics layer to the map if it's not already added
+        if (!map.layers.includes(graphicsLayer)) {
+          map.add(graphicsLayer);
+        }
+
+        // Return the graphics layer
+        return graphicsLayer;
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
