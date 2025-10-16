@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WebMap Service Metadata Viewer</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1em;
+      background-color: #1e1e1e;
+      color: #eee;
+    }
+    .metadata-block {
+      background-color: #2e2e2e;
+      border: 1px solid #444;
+      padding: 1em;
+      margin-bottom: 1em;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Service Metadata</h1>
+  <div id="serviceMetadata">Loading service metadata...</div>
+
+  <script type="module">
+    import esriConfig from "https://js.arcgis.com/4.33/@arcgis/core/config.js";
+    import WebMap from "https://js.arcgis.com/4.33/@arcgis/core/WebMap.js";
+
+    // Set your portal URL here
+    esriConfig.portalUrl = "https://YOUR-PORTAL/portal"; // ← Replace with your actual portal URL
+
+    const container = document.getElementById("serviceMetadata");
+    const urlParams = new URLSearchParams(window.location.search);
+    const webmapId = urlParams.get("webmap");
+
+    if (!container) {
+      console.error("Missing #serviceMetadata container.");
+    } else if (!webmapId) {
+      container.innerText = "No WebMap ID provided in URL. Please add ?webmap=YOUR_WEBMAP_ID";
+    } else {
+      const webmap = new WebMap({
+        portalItem: {
+          id: webmapId
+        }
+      });
+
+      webmap.load().then(() => {
+        container.innerHTML = "";
+
+        const layers = webmap.layers.items;
+        if (!layers || layers.length === 0) {
+          container.innerText = "No operational layers found in the WebMap.";
+          return;
+        }
+
+        layers.forEach(layer => {
+          const url = layer.url;
+          if (!url) return;
+
+          fetch(`${url}?f=json`)
+            .then(response => response.json())
+            .then(data => {
+              const block = document.createElement("div");
+              block.className = "metadata-block";
+              block.textContent = `Layer Title: ${layer.title || "Untitled"}\nURL: ${url}\n\n${JSON.stringify(data, null, 2)}`;
+              container.appendChild(block);
+            })
+            .catch(error => {
+              const block = document.createElement("div");
+              block.className = "metadata-block";
+              block.textContent = `Error loading metadata for ${url}: ${error}`;
+              container.appendChild(block);
+            });
+        });
+      }).catch(error => {
+        container.innerText = `Error loading WebMap: ${error.message || error}`;
+      });
+    }
+  </script>
+</body>
+</html>
