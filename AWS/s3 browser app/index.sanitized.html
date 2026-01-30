@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>ArcGIS ESM + S3 — Upload, View & Delete JPEGs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.29/@arcgis/core/assets/esri/themes/light/main.css"/>
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1482.0.min.js"></script>
+  <style>
+    html, body, #viewDiv { height:100%; width:100%; margin:0; padding:0; }
+    .panel { min-width: 320px; max-width: 440px; font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .panel h3 { margin: 0 0 8px; font-size: 16px; }
+    .row { display:flex; gap:8px; align-items:center; margin: 6px 0; flex-wrap: wrap; }
+    .panel input[type="text"], .panel input[type="file"], .panel select { width:100%; border:1px solid #cfd7e6; border-radius:6px; padding:8px 10px; background:#fff; }
+    .panel button { background:#2f7cf6; color:#fff; border:none; border-radius:6px; padding:8px 12px; cursor:pointer; font-weight:600; }
+    .panel button.secondary { background:#6b7b90; }
+    .panel button.danger { background:#d7263d; }
+    .muted { color:#6b7b90; font-size: 12px; }
+    #imageViewer { position:absolute; right:16px; bottom:16px; left:16px; max-height:40%; background:#ffffffc8; backdrop-filter: blur(2px); border:1px solid #dfe6f2; border-radius:10px; padding:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    #imageViewer img { max-width:100%; max-height:100%; object-fit:contain; }
+    progress { width:100%; height:10px; }
+    .topRightStack { display: flex; flex-direction: column; gap: 150px; pointer-events: auto; }
+    .stackItem {}
+  </style>
+</head>
+<body>
+  <div id="viewDiv" role="main" aria-label="Map"></div>
+  <div id="imageViewer"><span class="muted">No image loaded yet.</span></div>
+  <script type="module">
+    import Map from "https://js.arcgis.com/4.29/@arcgis/core/Map.js";
+    import MapView from "https://js.arcgis.com/4.29/@arcgis/core/views/MapView.js";
+    import Expand from "https://js.arcgis.com/4.29/@arcgis/core/widgets/Expand.js";
+    import BasemapGallery from "https://js.arcgis.com/4.29/@arcgis/core/widgets/BasemapGallery.js";
+
+    // CONFIG — replace placeholders before deploying
+    const AWS_REGION = "YOUR-AWS-REGION";                       // e.g., "us-west-2"
+    const COGNITO_IDENTITY_POOL_ID = "YOUR-IDENTITY-POOL-ID";   // e.g., "us-west-2:xxxx..."
+    const BUCKET = "YOUR-S3-BUCKET-NAME";                       // S3 bucket name
+    const DEFAULT_PREFIX = "YOUR-PREFIX/";                       // e.g., "uploads/"
+
+    const $ = (id) => document.getElementById(id);
+    const sanitizeKeyPart = (s) => String(s || "").replace(/[^\w.\-\/]/g, "_");
+    let s3 = null;
+
+    async function initAws() {
+      AWS.config.update({ region: AWS_REGION, correctClockSkew: true });
+      AWS.config.credentials = new AWS.CognitoIdentityCredentials({ IdentityPoolId: COGNITO_IDENTITY_POOL_ID });
+      await new Promise((resolve, reject) => AWS.config.credentials.refresh(err => err ? reject(err) : resolve()));
+      const endpoint = new AWS.Endpoint(`https://s3.${AWS_REGION}.amazonaws.com`);
+      s3 = new AWS.S3({ apiVersion: "2006-03-01", signatureVersion: "v4", endpoint, s3ForcePathStyle: true });
+      console.log("S3 endpoint:", s3.config.endpoint.href, "region:", AWS.config.region);
+    }
+
+    async function onUpload() {
+      try {
+        const fileEl = $("fileInput");
+        const status = $("uploadStatus");
+        const progress = $("uploadProgress");
+        status.textContent = ""; progress.value = 0;
+        if (!fileEl.files.length) { alert("Pick a JPEG first."); return; }
+        const file = fileEl.files[0];
+        if (file.type !== "image/jpeg") { alert("Only image/jpeg allowed."); return; }
+        let key = $("keyInput").value.trim();
+        if (!key) key = `${DEFAULT_PREFIX}${Date.now()}-${sanitizeKeyPart(file.name)}`;
+        if (!/\.jpe?g$/i.test(key)) key += ".jpg";
+        const uploader = s3.upload({ Bucket: BUCKET, Key: key, Body: file, ContentType: "image/jpeg" });
+        uploader.on("httpUploadProgress", (evt) => { if (evt.total) progress.value = Math.round((evt.loaded / evt.total) * 100); });
+        const result = await uploader.promise();
+        status.textContent = `Uploaded: ${key} (ETag: ${result.ETag || "n/a"})`;
+        const sel = $("keySelect");
+        const opt = document.createElement("option"); opt.value = key; opt.textContent = key; sel.prepend(opt); sel.value = key;
+        alert("Uploaded!");
+      } catch (e) { console.error(e); $("uploadStatus").textContent = e.message || String(e); alert(e.message || String(e)); }
+    }
+
+    async function onList() {
+      try {
+        const prefix = $("prefixInput").value.trim() || "";
+        $("browseStatus").textContent = "Listing…";
+        const keys = []; let ContinuationToken = undefined;
+        do {
+          const out = await s3.listObjectsV2({ Bucket: BUCKET, Prefix: prefix, ContinuationToken }).promise();
+          (out.Contents || []).forEach(o => o.Key && keys.push(o.Key));
+          ContinuationToken = out.IsTruncated ? out.NextContinuationToken : undefined;
+        } while (ContinuationToken);
+        const sel = $("keySelect"); sel.innerHTML = '<option value="">— Select an image key —</option>';
+        const jpgs = keys.filter(k => /\.jpe?g$/i.test(k));
+        if (!jpgs.length) { $("browseStatus").textContent = "No JPEGs found."; return; }
+        jpgs.forEach(k => { const opt = document.createElement("option"); opt.value = k; opt.textContent = k; sel.appendChild(opt); });
+        $("browseStatus").textContent = `Found ${jpgs.length} JPEG(s).`;
+      } catch (e) { console.error(e); $("browseStatus").textContent = e.message || String(e); alert(e.message || String(e)); }
+    }
+
+    async function onShow() {
+      try {
+        const key = $("keySelect").value.trim();
+        if (!key) { alert("Pick a key first."); return; }
+        const url = s3.getSignedUrl("getObject", { Bucket: BUCKET, Key: key, Expires: 60, ResponseContentType: "image/jpeg" });
+        const img = new Image(); img.alt = key;
+        img.onload = () => { const v = $("imageViewer"); v.innerHTML = ""; v.appendChild(img); };
+        img.onerror = () => alert("Failed to load image (URL may have expired).");
+        img.src = url;
+      } catch (e) { console.error(e); alert(e.message || String(e)); }
+    }
+
+    async function onDelete() {
+      const btn = $("btnDelete");
+      try {
+        const key = $("keySelect").value.trim();
+        if (!key) { alert("Pick a key first."); return; }
+        if (!confirm(`Delete this object?\n\ns3://${BUCKET}/${key}`)) return;
+        btn.disabled = true;
+        await s3.deleteObject({ Bucket: BUCKET, Key: key }).promise();
+        const sel = $("keySelect"); const toRemove = Array.from(sel.options).find(o => o.value === key); if (toRemove) sel.removeChild(toRemove);
+        $("browseStatus").textContent = `Deleted: ${key}`;
+        $("imageViewer").innerHTML = "<span class='muted'>No image loaded yet.</span>";
+        alert("Deleted.");
+      } catch (e) { console.error(e); alert(`${e.code || "Error"}: ${e.message || String(e)}`); }
+      finally { btn.disabled = false; }
+    }
+
+    function createUploadPanel() {
+      const el = document.createElement("div"); el.className = "panel";
+      el.innerHTML = `
+        <h3>Upload JPEG to S3 (bucket: ${BUCKET})</h3>
+        <div class="row"><input id="fileInput" type="file" accept="image/jpeg"/></div>
+        <div class="row"><input id="keyInput" type="text" placeholder="Optional key, e.g., ${DEFAULT_PREFIX}2026-01-26-xyz.jpg"/></div>
+        <div class="row" style="width:100%;"><progress id="uploadProgress" max="100" value="0"></progress></div>
+        <div class="row"><button id="btnUpload">Upload</button></div>
+        <p class="muted">If blank, key becomes <code>${DEFAULT_PREFIX}<timestamp>-<filename></code>.</p>
+        <div id="uploadStatus" class="muted"></div>`;
+      el.querySelector("#btnUpload").addEventListener("click", onUpload);
+      return el;
+    }
+
+    function createBrowsePanel() {
+      const el = document.createElement("div"); el.className = "panel";
+      el.innerHTML = `
+        <h3>Browse, View & Delete</h3>
+        <div class="row"><input id="prefixInput" type="text" placeholder="Optional prefix (e.g., ${DEFAULT_PREFIX} or roadlogs/)"/></div>
+        <div class="row"><button id="btnList" class="secondary">List JPEGs</button></div>
+        <div class="row"><select id="keySelect"><option value="">— Select an image key —</option></select></div>
+        <div class="row"><button id="btnShow">Show</button><button id="btnDelete" class="danger">Delete</button></div>
+        <p class="muted">View uses a short‑lived signed URL. Delete permanently removes the object.</p>
+        <div id="browseStatus" class="muted"></div>`;
+      el.querySelector("#btnList").addEventListener("click", onList);
+      el.querySelector("#btnShow").addEventListener("click", onShow);
+      el.querySelector("#btnDelete").addEventListener("click", onDelete);
+      return el;
+    }
+
+    (async function start() {
+      await initAws();
+      const map = new Map({ basemap: "streets" });
+      const view = new MapView({ container: "viewDiv", map, center: [-117.1825, 34.0556], zoom: 12 });
+      const topRightStack = document.createElement("div"); topRightStack.className = "topRightStack";
+      const uploadSlot = document.createElement("div"); uploadSlot.className = "stackItem"; topRightStack.appendChild(uploadSlot);
+      const browseSlot = document.createElement("div"); browseSlot.className = "stackItem"; topRightStack.appendChild(browseSlot);
+      view.ui.add(topRightStack, "top-right");
+      new Expand({ view, content: createUploadPanel(), expandIcon: "upload", expandTooltip: "Upload JPEG", expanded: true, container: uploadSlot });
+      new Expand({ view, content: createBrowsePanel(), expandIcon: "image", expandTooltip: "Browse S3", expanded: true, container: browseSlot });
+      const bmExpand = new Expand({ view, content: new BasemapGallery({ view }), expandTooltip: "Basemaps" });
+      view.ui.add(bmExpand, "top-left");
+    })();
+  </script>
+</body>
+</html>
